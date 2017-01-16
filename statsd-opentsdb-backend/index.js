@@ -39,6 +39,10 @@ var setsNamespace     = [];
 
 var opentsdbStats = {};
 
+var nsqMetricPrefix = "nsq_cluster_"
+var nsqChannelMetricMark = ".channel."
+var nsqOpenTSDBKeyPrefix = "nsq"
+
 var post_stats = function opentsdb_post_stats(statString) {
   var last_flush = opentsdbStats.last_flush || 0;
   var last_exception = opentsdbStats.last_exception || 0;
@@ -90,6 +94,28 @@ function parse_tags(metric_name) {
   return tags;
 }
 
+// parse_tags_for_nsq_metric returns a list of "tagk=tagv" string from nsq metric.
+function parse_tags_for_nsq_metric(metric_name) {
+  // not a nsq metric
+  if (metric_name.indexOf(nsqMetricPrefix) != 0) {
+    return [];
+  }
+
+  var parts = metric_name.split(".");
+  var tags = [];
+
+  tags.push("cluster" + "=" + parts[0].substring(nsqMetricPrefix.length));
+  tags.push("nsqd" + "=" + parts[1]);
+  if (parts[2] == "topic") {
+      tags.push("topic" + "=" + parts[3]);
+      if (metric_name.indexOf(nsqChannelMetricMark) != -1) {
+          tags.push("channel" + "=" + parts[5]);
+      }
+  }
+
+  return tags;
+}
+
 // Strips out all tag information from the given metric name
 function strip_tags(metric_name) {
   var parts = metric_name.split(".");
@@ -106,6 +132,38 @@ function strip_tags(metric_name) {
   return rslt_parts.join(".");
 }
 
+// strip_tags_for_nsq_metric strips out all tag information from nsq metric.
+function strip_tags_for_nsq_metric(metric_name) {
+  // not a nsq metric
+  if (metric_name.indexOf(nsqMetricPrefix) != 0) {
+    return metric_name;
+  }
+
+  var parts = metric_name.split(".");
+  var rslt_parts = [];
+
+  rslt_parts.push(nsqOpenTSDBKeyPrefix);
+  parts.shift();
+  parts.shift();
+
+  while (parts.length > 0) {
+    if (parts[0] == "topic") {
+        rslt_parts.push(parts.shift());
+        parts.shift();
+        continue;
+    }
+    if (parts[0] == "channel") {
+        rslt_parts.pop();
+        rslt_parts.push(parts.shift());
+        parts.shift();
+        continue;
+    }
+
+    rslt_parts.push(parts.shift());
+  }
+
+  return rslt_parts.join(".");
+}
 
 var flush_stats = function opentsdb_flush(ts, metrics) {
   var suffix = " source=statsd\n";
@@ -122,8 +180,8 @@ var flush_stats = function opentsdb_flush(ts, metrics) {
   var statsd_metrics = metrics.statsd_metrics;
 
   for (key in counters) {
-    var tags = parse_tags(key);
-    var stripped_key = strip_tags(key)
+    var tags = parse_tags_for_nsq_metric(key);
+    var stripped_key = strip_tags_for_nsq_metric(key)
 
     var namespace = counterNamespace.concat(stripped_key);
     var value = counters[key];
@@ -140,8 +198,8 @@ var flush_stats = function opentsdb_flush(ts, metrics) {
   for (key in timer_data) {
     if (Object.keys(timer_data).length > 0) {
       for (timer_data_key in timer_data[key]) {
-        var tags = parse_tags(key);
-        var stripped_key = strip_tags(key)
+        var tags = parse_tags_for_nsq_metric(key);
+        var stripped_key = strip_tags_for_nsq_metric(key)
 
         var namespace = timerNamespace.concat(stripped_key);
         var the_key = namespace.join(".");
@@ -153,8 +211,8 @@ var flush_stats = function opentsdb_flush(ts, metrics) {
   }
 
   for (key in gauges) {
-    var tags = parse_tags(key);
-    var stripped_key = strip_tags(key)
+    var tags = parse_tags_for_nsq_metric(key);
+    var stripped_key = strip_tags_for_nsq_metric(key)
 
     var namespace = gaugesNamespace.concat(stripped_key);
     statString += 'put ' + namespace.join(".") + ' ' + ts + ' ' + gauges[key] + ' ' + tags.join(' ') + suffix;
@@ -162,8 +220,8 @@ var flush_stats = function opentsdb_flush(ts, metrics) {
   }
 
   for (key in sets) {
-    var tags = parse_tags(key);
-    var stripped_key = strip_tags(key)
+    var tags = parse_tags_for_nsq_metric(key);
+    var stripped_key = strip_tags_for_nsq_metric(key)
 
     var namespace = setsNamespace.concat(stripped_key);
     statString += 'put ' + namespace.join(".") + '.count ' + ts + ' ' + sets[key].values().length + ' ' + tags.join(' ') + suffix;
