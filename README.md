@@ -22,28 +22,28 @@ Thus, we customize nsqd metrics to OpenTSDB and make them taged.
 ## metrics
 |Metrics|
 |---|
-|nsq.topic.backend_depth|
-|nsq.topic.depth|
-|nsq.topic.message_count|
-|nsq.channel.backend_depth|
-|nsq.channel.clients|
-|nsq.channel.deferred_count|
-|nsq.channel.depth|
-|nsq.channel.in_flight_count|
-|nsq.channel.message_count|
-|nsq.channel.requeue_count|
-|nsq.channel.timeout_count|
-|nsq.mem.heap_objects|
-|nsq.mem.heap_idle_bytes|
-|nsq.mem.heap_in_use_bytes|
-|nsq.mem.heap_released_bytes|
-|nsq.mem.gc_pause_usec_100|
-|nsq.mem.gc_pause_usec_99|
-|nsq.mem.gc_pause_usec_95|
-|nsq.mem.mem.next_gc_bytes|
-|nsq.mem.gc_runs|
-|`nsq.topic.e2e_processing_latency_<percent>`|
-|`nsq.channel.e2e_processing_latency_<percent>`|
+|nsqd.topic.backend_depth|
+|nsqd.topic.depth|
+|nsqd.topic.message_count|
+|nsqd.channel.backend_depth|
+|nsqd.channel.clients|
+|nsqd.channel.deferred_count|
+|nsqd.channel.depth|
+|nsqd.channel.in_flight_count|
+|nsqd.channel.message_count|
+|nsqd.channel.requeue_count|
+|nsqd.channel.timeout_count|
+|nsqd.mem.heap_objects|
+|nsqd.mem.heap_idle_bytes|
+|nsqd.mem.heap_in_use_bytes|
+|nsqd.mem.heap_released_bytes|
+|nsqd.mem.gc_pause_usec_100|
+|nsqd.mem.gc_pause_usec_99|
+|nsqd.mem.gc_pause_usec_95|
+|nsqd.mem.mem.next_gc_bytes|
+|nsqd.mem.gc_runs|
+|`nsqd.topic.e2e_processing_latency_<percent>`|
+|`nsqd.channel.e2e_processing_latency_<percent>`|
 
 ## Overview
 This is a pluggable backend for [StatsD](https://github.com/etsy/statsd), which

@@ -41,7 +41,7 @@ var opentsdbStats = {};
 
 var nsqMetricPrefix = "nsq_cluster_"
 var nsqChannelMetricMark = ".channel."
-var nsqOpenTSDBKeyPrefix = "nsq"
+var nsqOpenTSDBKeyPrefix = "nsqd"
 
 var post_stats = function opentsdb_post_stats(statString) {
   var last_flush = opentsdbStats.last_flush || 0;
@@ -56,6 +56,7 @@ var post_stats = function opentsdb_post_stats(statString) {
       });
       opentsdb.on('connect', function() {
         var ts = Math.round(new Date().getTime() / 1000);
+        ts = ts - ts % flushInterval;
         var namespace = globalNamespace.concat('statsd');
         statString += 'put ' + namespace.join(".") + '.opentsdbStats.last_exception ' + last_exception + ' ' + ts + "\n";
         statString += 'put ' + namespace.join(".") + '.opentsdbStats.last_flush ' + last_flush + ' ' + ts + "\n";
@@ -166,6 +167,7 @@ function strip_tags_for_nsq_metric(metric_name) {
 }
 
 var flush_stats = function opentsdb_flush(ts, metrics) {
+  ts = ts - ts % flushInterval;
   var suffix = " source=statsd\n";
   var starttime = Date.now();
   var statString = '';
@@ -307,7 +309,7 @@ exports.init = function opentsdb_init(startup_time, config, events) {
   opentsdbStats.last_flush = startup_time;
   opentsdbStats.last_exception = startup_time;
 
-  flushInterval = config.flushInterval;
+  flushInterval = config.flushInterval / 1000;
 
   events.on('flush', flush_stats);
   events.on('status', backend_status);
